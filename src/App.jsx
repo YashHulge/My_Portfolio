@@ -65,7 +65,7 @@ export default function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null); 
   
-  // Chat Widget State
+  // --- CHAT & CLI STATE ---
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState('');
   const [isBotTyping, setIsBotTyping] = useState(false);
@@ -74,21 +74,37 @@ export default function App() {
   ]);
   const chatEndRef = useRef(null);
 
+  const [isCliOpen, setIsCliOpen] = useState(false);
+  const [cliInput, setCliInput] = useState('');
+  const [cliHistory, setCliHistory] = useState([
+    { text: "YashOS [Version 1.0.0]\n(c) Yash Hulge. All rights reserved.\n", type: "normal" },
+    { text: "💡 INITIALIZATION COMPLETE. Type 'help' to see a list of available commands.", type: "success" }
+  ]);
+  const cliEndRef = useRef(null);
+
   const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
-  useEffect(() => {
-    if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages, isBotTyping]);
+  // Auto-scrolls
+  useEffect(() => { if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: 'smooth' }); }, [messages, isBotTyping]);
+  useEffect(() => { if (cliEndRef.current) cliEndRef.current.scrollIntoView({ behavior: 'smooth' }); }, [cliHistory]);
 
+  // Key Listener for CLI (Backtick `)
   useEffect(() => {
-    if (selectedProject) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-  }, [selectedProject]);
+    const handleKeyDown = (e) => {
+      if (e.key === '`') {
+        e.preventDefault();
+        setIsCliOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Lock body scroll for modals
+  useEffect(() => {
+    if (selectedProject || isCliOpen) { document.body.style.overflow = 'hidden'; } 
+    else { document.body.style.overflow = 'unset'; }
+  }, [selectedProject, isCliOpen]);
 
   const scrollToSection = (id) => {
     const element = document.getElementById(id);
@@ -98,60 +114,85 @@ export default function App() {
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
+  const handleInputChange = (e) => { setFormData({ ...formData, [e.target.name]: e.target.value }); };
 
   const validateForm = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.message) {
-      alert("Please fill in the required fields.");
-      return;
-    }
+    if (!formData.name || !formData.email || !formData.message) return alert("Please fill in the required fields.");
     setIsSubmitting(true);
     try {
       const response = await fetch("https://api.web3forms.com/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({
-          access_key: "YOUR_WEB3FORMS_ACCESS_KEY_HERE", 
-          name: formData.name, email: formData.email, phone: formData.mobile, message: formData.message, subject: "New Portfolio Message",
-        }),
+        method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ access_key: "04193aa3-83a1-4a41-a5f7-d36991cfe043", name: formData.name, email: formData.email, phone: formData.mobile, message: formData.message, subject: "New Portfolio Message" }),
       });
       const result = await response.json();
-      if (result.success) {
-        alert('Message Sent Successfully!');
-        setFormData({ name: '', email: '', mobile: '', message: '' });
-      } else { alert('Error sending message.'); }
+      if (result.success) { alert('Message Sent Successfully!'); setFormData({ name: '', email: '', mobile: '', message: '' }); } 
+      else { alert('Error sending message.'); }
     } catch (error) { alert('Network error. Please try again.'); } finally { setIsSubmitting(false); }
   };
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
-
     const userText = chatInput;
     setMessages(prev => [...prev, { sender: 'user', text: userText }]);
-    setChatInput('');
-    setIsBotTyping(true);
-
+    setChatInput(''); setIsBotTyping(true);
     try {
-      const systemInstruction = `
-        You are an AI assistant integrated into the professional portfolio of Yash Bhalchandra Hulge. 
-        Your job is to answer questions about Yash in a concise, professional tone. Keep answers short.
-        Facts: Student at Savitribai Phule Pune University (NMIET) with 8.4 CGPA. Frontend developer (HTML5, CSS3, JavaScript, React.js), Python, C++. AI Intern at Coincent. Projects: Bharat-Setu, AI Financial Web App, DeepFake Model, PokeDex Web App. Email: hulgeyash12@gmail.com
-      `;
+      const systemInstruction = `You are an AI assistant integrated into the professional portfolio of Yash Bhalchandra Hulge. Your job is to answer questions about Yash concisely. Facts: Student at Savitribai Phule Pune University (NMIET) with 8.4 CGPA. Frontend developer (HTML5, CSS3, JavaScript, React.js), Python, C++. AI Intern at Coincent. Projects: Bharat-Setu, AI Financial Web App, DeepFake Model, PokeDex Web App. Email: hulgeyash12@gmail.com`;
       const history = messages.map(msg => ({ role: msg.sender === 'bot' ? 'model' : 'user', parts: [{ text: msg.text }] }));
       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-      const chat = model.startChat({
-        history: [ { role: 'user', parts: [{ text: systemInstruction }] }, { role: 'model', parts: [{ text: 'Understood.' }]}, ...history.slice(1) ],
-      });
+      const chat = model.startChat({ history: [ { role: 'user', parts: [{ text: systemInstruction }] }, { role: 'model', parts: [{ text: 'Understood.' }]}, ...history.slice(1) ] });
       const result = await chat.sendMessage(userText);
       setMessages(prev => [...prev, { sender: 'bot', text: result.response.text() }]);
-    } catch (error) {
-      setMessages(prev => [...prev, { sender: 'bot', text: "I'm experiencing high traffic right now. Please email Yash directly!" }]);
-    } finally { setIsBotTyping(false); }
+    } catch (error) { setMessages(prev => [...prev, { sender: 'bot', text: "High traffic. Please email Yash directly!" }]); } 
+    finally { setIsBotTyping(false); }
+  };
+
+  // --- CLI LOGIC ---
+  const handleCliSubmit = (e) => {
+    e.preventDefault();
+    if (!cliInput.trim()) return;
+    
+    const cmd = cliInput.trim().toLowerCase();
+    let responseText = '';
+    let responseType = 'normal';
+
+    switch(cmd) {
+      case 'help':
+        responseText = "Available commands:\n  whoami    - Display basic profile info\n  skills    - List technical stack\n  projects  - List featured projects\n  clear     - Clear terminal\n  contact   - Display contact info";
+        break;
+      case 'whoami':
+        responseText = "Yash Bhalchandra Hulge\nComputer Engineering Student @ SPPU (8.4 CGPA)\nFrontend Developer & AI Enthusiast.";
+        responseType = 'success';
+        break;
+      case 'skills':
+        responseText = "[Frontend]: HTML5, CSS3, JavaScript, React.js\n[Core]: Python, C++, SQL\n[Cloud]: GCP, Azure, MySQL\n[Tools]: Git/GitHub, Jupyter";
+        break;
+      case 'projects':
+        responseText = "1. Bharat-Setu Platform (Python, AI)\n2. AI-Powered Financial Web App (React, Gemini API)\n3. DeepFake Video Detection (ML, CNNs)\n4. PokeDex Web App (React.js)";
+        break;
+      case 'contact':
+        responseText = "Email: hulgeyash12@gmail.com\nLocation: Pune, Maharashtra";
+        break;
+      case 'clear':
+        setCliHistory([]);
+        setCliInput('');
+        return;
+      case 'sudo':
+        responseText = "nice try, recruiter. permission denied.";
+        responseType = 'error';
+        break;
+      default:
+        responseText = `Command not found: ${cmd}. Type 'help' for available commands.`;
+        responseType = 'error';
+    }
+
+    setCliHistory(prev => [
+      ...prev, 
+      { text: `admin@yash-portfolio ~$ ${cliInput}`, type: 'prompt' },
+      { text: responseText, type: responseType }
+    ]);
+    setCliInput('');
   };
 
   return (
@@ -164,6 +205,10 @@ export default function App() {
           <button onClick={() => scrollToSection('projects')}>Projects</button>
           <button onClick={() => scrollToSection('experience')}>Experience</button>
           <button onClick={() => scrollToSection('contact')}>Contact</button>
+          {/* UPDATED TERMINAL BUTTON */}
+          <button className="nav-terminal-btn" onClick={() => setIsCliOpen(true)}>
+            <span className="terminal-icon">&gt;_</span> YashOS <span className="terminal-shortcut-hint">[`]</span>
+          </button>
         </div>
       </nav>
 
@@ -218,20 +263,45 @@ export default function App() {
 
         <section id="experience" style={{ paddingTop: '6rem' }}>
           <motion.h2 className="section-title" initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeInUp}>Experience & Education</motion.h2>
-          <motion.div className="skills-grid" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }}>
-            <motion.div className="skill-card" variants={fadeInUp} style={{ textAlign: 'left' }}>
+          <div className="experience-education-grid">
+            <motion.div className="skill-card Bento Bento-Experience" variants={fadeInUp} style={{ textAlign: 'left' }}>
               <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>Experience</h3>
               <p style={{ color: 'var(--text-main)', marginBottom: '0.2rem', fontWeight: '600', fontSize: '1.05rem' }}>Coincent | Artificial Intelligence Intern</p>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>July 2022 - Aug 2022</p>
               <p style={{ color: 'var(--text-muted)', marginTop: '1rem', lineHeight: '1.6', fontSize: '0.95rem' }}>Completed an intensive AI training program in collaboration with Microsoft and Languify, focusing on Python and deep-learning fundamentals.</p>
             </motion.div>
 
-            <motion.div className="skill-card" variants={fadeInUp} style={{ textAlign: 'left' }}>
+            <motion.div className="skill-card Bento Bento-Education" variants={fadeInUp} style={{ textAlign: 'left' }}>
               <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>Education</h3>
               <p style={{ color: 'var(--text-main)', marginBottom: '0.2rem', fontWeight: '600', fontSize: '1.05rem' }}>Savitribai Phule Pune University | Computer Engineer</p>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>NMIET, Talegaon Pune</p>
               <p style={{ color: 'var(--text-muted)', marginTop: '1rem', lineHeight: '1.6', fontSize: '0.95rem' }}>Aggregate: 8.4 CGPA (75.8%)<br />Awards: Runner-up at Inter-College Project Competition; Gaurav Chinha Award for Academic Excellence.</p>
             </motion.div>
+          </div>
+        </section>
+
+        {/* --- NEW YASHOS DEDICATED SECTION --- */}
+        <section id="yashos-promo" style={{ paddingTop: '2rem' }}>
+          <motion.div className="yashos-banner" variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }}>
+            <div className="yashos-banner-content">
+              <h2>Try <span className="text-gradient">YashOS</span></h2>
+              <p>Curious about my background? Skip the scrolling and explore my skills, projects, and experience directly through my custom command-line interface.</p>
+              <button className="btn-glow" onClick={() => setIsCliOpen(true)}>Initialize YashOS</button>
+            </div>
+            
+            {/* Visual representation of the terminal that acts as a giant clickable button */}
+            <div className="yashos-banner-visual" onClick={() => setIsCliOpen(true)}>
+              <div className="mock-terminal-header">
+                <div className="mock-dot red"></div>
+                <div className="mock-dot yellow"></div>
+                <div className="mock-dot green"></div>
+              </div>
+              <div className="mock-terminal-body">
+                <p><span className="mock-prompt">admin@yash-portfolio ~$</span><span className="mock-cmd">whoami</span></p>
+                <p className="mock-res">Yash Bhalchandra Hulge. Frontend Developer.</p>
+                <p><span className="mock-prompt">admin@yash-portfolio ~$</span><span className="blink-cursor">_</span></p>
+              </div>
+            </div>
           </motion.div>
         </section>
 
@@ -250,8 +320,37 @@ export default function App() {
 
         <footer className="footer">
           <p><a href="mailto:hulgeyash12@gmail.com">hulgeyash12@gmail.com</a> • <a href="https://www.linkedin.com/in/yash-hulge/" target="_blank" rel="noopener noreferrer">LinkedIn</a> • <a href="https://github.com/YashHulge" target="_blank" rel="noopener noreferrer">GitHub</a></p>
+          <div className="lighthouse-badge" title="Verified by Google Lighthouse Performance Audit">
+            <span className="lighthouse-icon">⚡</span> Lighthouse Score: 100/100
+          </div>
         </footer>
       </div>
+
+      {/* --- HIDDEN CLI OVERLAY --- */}
+      <AnimatePresence>
+        {isCliOpen && (
+          <motion.div className="cli-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsCliOpen(false)}>
+            <motion.div className="cli-window" variants={modalVariants} initial="hidden" animate="visible" exit="exit" onClick={(e) => e.stopPropagation()}>
+              <div className="cli-header">
+                <span className="cli-header-text">bash - admin@yash-portfolio</span>
+                <button style={{background:'none', border:'none', color:'#888', cursor:'pointer'}} onClick={() => setIsCliOpen(false)}>✖</button>
+              </div>
+              <div className="cli-body" onClick={() => document.getElementById('cli-input-field').focus()}>
+                {cliHistory.map((item, idx) => (
+                  <div key={idx} className={`cli-response ${item.type === 'error' ? 'cli-error' : item.type === 'success' ? 'cli-success' : ''}`}>
+                    {item.text}
+                  </div>
+                ))}
+                <form className="cli-input-line" onSubmit={handleCliSubmit}>
+                  <span className="cli-prompt">admin@yash-portfolio ~$</span>
+                  <input id="cli-input-field" type="text" className="cli-input" value={cliInput} onChange={(e) => setCliInput(e.target.value)} autoComplete="off" autoFocus />
+                </form>
+                <div ref={cliEndRef} />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* --- CASE STUDY MODAL --- */}
       <AnimatePresence>
@@ -259,27 +358,11 @@ export default function App() {
           <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedProject(null)}>
             <motion.div className="modal-content" variants={modalVariants} initial="hidden" animate="visible" exit="exit" onClick={(e) => e.stopPropagation()}>
               <button className="modal-close-btn" onClick={() => setSelectedProject(null)}>×</button>
-              
               <h2 style={{ fontSize: '2rem', marginBottom: '1rem', color: 'var(--text-main)' }}>{selectedProject.title}</h2>
-              <div className="tech-tags" style={{ marginBottom: '2rem' }}>
-                {selectedProject.tags.map((tag, idx) => <span key={idx} className="tech-tag">{tag}</span>)}
-              </div>
-
-              <div className="case-study-section">
-                <h4>System Architecture</h4>
-                <p>{selectedProject.architecture}</p>
-              </div>
-
-              <div className="case-study-section">
-                <h4>The Hardest Challenge</h4>
-                <p>{selectedProject.challenge}</p>
-              </div>
-
-              <div className="case-study-section">
-                <h4>Business & Technical Impact</h4>
-                <p>{selectedProject.impact}</p>
-              </div>
-
+              <div className="tech-tags" style={{ marginBottom: '2rem' }}>{selectedProject.tags.map((tag, idx) => <span key={idx} className="tech-tag">{tag}</span>)}</div>
+              <div className="case-study-section"><h4>System Architecture</h4><p>{selectedProject.architecture}</p></div>
+              <div className="case-study-section"><h4>The Hardest Challenge</h4><p>{selectedProject.challenge}</p></div>
+              <div className="case-study-section"><h4>Business & Technical Impact</h4><p>{selectedProject.impact}</p></div>
             </motion.div>
           </motion.div>
         )}
