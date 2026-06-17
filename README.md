@@ -1,16 +1,78 @@
-# React + Vite
+# 🚀 Yash Hulge | Interactive Developer Portfolio
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+![Lighthouse Score: 100/100](https://img.shields.io/badge/Lighthouse-100%2F100-brightgreen?style=for-the-badge&logo=lighthouse)
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Vite](https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E)
 
-Currently, two official plugins are available:
+Welcome to the repository of my personal portfolio website! This isn't just a standard static resume—it's a highly interactive, performance-optimized web application designed to showcase my skills in frontend development, AI integration, and creative UI/UX engineering.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+🔗 **Live Demo:** [my-portfolio-roan-chi-37.vercel.app](https://my-portfolio-roan-chi-37.vercel.app/)
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## ✨ Standout Features
 
-## Expanding the ESLint configuration
+* **💻 YashOS (Custom CLI Terminal):** A fully functional, integrated command-line interface built directly into the UI. Users can hit the \` \` \` (backtick) key or click the terminal button to boot up YashOS and run commands like \`whoami\`, \`skills\`, and \`projects\` to explore my background interactively.
+* **🤖 AI Recruiter Assistant:** Integrated with the **Google Gemini API**, my portfolio features a custom-trained AI chatbot capable of answering specific questions about my tech stack, education, and professional experience in real-time.
+* **⚡ 100/100 Performance:** Engineered for speed and accessibility, achieving a perfect 100/100 across all Google Lighthouse metrics.
+* **📬 Serverless Contact System:** Bypassed the need for a traditional backend by integrating **Web3Forms**, allowing direct, secure routing of contact form submissions straight to my email inbox.
+* **🎬 Fluid Animations:** Utilizes **Framer Motion** for buttery-smooth page transitions, staggered grid loading, and dynamic modal overlays.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+## 🛠️ Tech Stack
+
+* **Core:** React.js, JavaScript (ES6+), HTML5, Modern CSS3
+* **Build Tool:** Vite
+* **Animations:** Framer Motion
+* **AI Integration:** \`@google/generative-ai\` (Gemini 2.0 Flash)
+* **Backend/Forms:** Web3Forms API
+* **Deployment:** Vercel
+
+---
+
+## 🚀 Local Development Setup
+
+Want to run this project locally? Follow these steps:
+
+### 1. Clone the repository
+```bash
+git clone [https://github.com/YashHulge/My_Portfolio.git](https://github.com/YashHulge/My_Portfolio.git)
+cd My_Portfolio
+
+### 2. Install dependencies
+```
+```bash
+npm install
+
+```
+
+### 3. Set up Environment Variables
+
+Create a `.env` file in the root directory and add your Gemini API Key. *(Note: The Web3Forms access key is safely configured inside the application logic).*
+
+```env
+VITE_GEMINI_API_KEY=your_gemini_api_key_here
+
+```
+
+### 4. Start the development server
+
+```bash
+npm run dev
+
+```
+
+---
+
+## 📬 Let's Connect
+
+I'm always open to discussing new opportunities, collaborations, or tech architecture!
+
+* **Email:** [hulgeyash12@gmail.com](https://www.google.com/search?q=mailto%3Ahulgeyash12%40gmail.com)
+* **LinkedIn:** [linkedin.com/in/yash-hulge/](https://www.linkedin.com/in/yash-hulge/)
+* **GitHub:** [github.com/YashHulge](https://github.com/YashHulge)
+
+---
+
+*Designed & Built by Yash Bhalchandra Hulge.*
