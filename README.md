@@ -39,9 +39,9 @@ Want to run this project locally? Follow these steps:
 ```bash
 git clone [https://github.com/YashHulge/My_Portfolio.git](https://github.com/YashHulge/My_Portfolio.git)
 cd My_Portfolio
-
-### 2. Install dependencies
 ```
+### 2. Install dependencies
+
 ```bash
 npm install
 
