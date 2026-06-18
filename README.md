@@ -6,7 +6,7 @@
 
 Welcome to the repository of my personal portfolio website! This isn't just a standard static resume—it's a highly interactive, performance-optimized web application designed to showcase my skills in frontend development, AI integration, and creative UI/UX engineering.
 
-🔗 **Live Demo:** [Yash-Portfoolio](yashhulge-portfolio.vercel.app)
+🔗 **Live Demo:** [Yash-Portfolio](yashhulge-portfolio.vercel.app)
 
 ---
 
