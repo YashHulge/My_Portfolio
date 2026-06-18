@@ -13,7 +13,7 @@ Welcome to the repository of my personal portfolio website! This isn't just a st
 ## ✨ Standout Features
 
 * **💻 YashOS (Custom CLI Terminal):** A fully functional, integrated command-line interface built directly into the UI. Users can hit the \` \` \` (backtick) key or click the terminal button to boot up YashOS and run commands like \`whoami\`, \`skills\`, and \`projects\` to explore my background interactively.
-* **🤖 AI Recruiter Assistant:** Integrated with the **Google Gemini API**, my portfolio features a custom-trained AI chatbot capable of answering specific questions about my tech stack, education, and professional experience in real-time.
+* **🤖 AI Recruiter Assistant:** Integrated with the **Groq API** running Meta's **Llama 3.1**, my portfolio features a custom-trained, lightning-fast AI chatbot. Powered by Groq's LPU inference engine, it answers specific questions about my tech stack, education, and professional experience almost instantaneously.
 * **⚡ 100/100 Performance:** Engineered for speed and accessibility, achieving a perfect 100/100 across all Google Lighthouse metrics.
 * **📬 Serverless Contact System:** Bypassed the need for a traditional backend by integrating **Web3Forms**, allowing direct, secure routing of contact form submissions straight to my email inbox.
 * **🎬 Fluid Animations:** Utilizes **Framer Motion** for buttery-smooth page transitions, staggered grid loading, and dynamic modal overlays.
@@ -25,7 +25,7 @@ Welcome to the repository of my personal portfolio website! This isn't just a st
 * **Core:** React.js, JavaScript (ES6+), HTML5, Modern CSS3
 * **Build Tool:** Vite
 * **Animations:** Framer Motion
-* **AI Integration:** \`@google/generative-ai\` (Gemini 2.0 Flash)
+* **AI Integration:** \`groq-sdk\` (Llama-3.1-8b-instant)
 * **Backend/Forms:** Web3Forms API
 * **Deployment:** Vercel
 
@@ -40,6 +40,7 @@ Want to run this project locally? Follow these steps:
 git clone [https://github.com/YashHulge/My_Portfolio.git](https://github.com/YashHulge/My_Portfolio.git)
 cd My_Portfolio
 ```
+
 ### 2. Install dependencies
 
 ```bash
@@ -49,10 +50,10 @@ npm install
 
 ### 3. Set up Environment Variables
 
-Create a `.env` file in the root directory and add your Gemini API Key. *(Note: The Web3Forms access key is safely configured inside the application logic).*
+Create a `.env` file in the root directory and add your Groq API Key. *(Note: The Web3Forms access key is safely configured inside the application logic).*
 
 ```env
-VITE_GEMINI_API_KEY=your_gemini_api_key_here
+VITE_GROQ_API_KEY=your_groq_api_key_here
 
 ```
 
@@ -76,3 +77,9 @@ I'm always open to discussing new opportunities, collaborations, or tech archite
 ---
 
 *Designed & Built by Yash Bhalchandra Hulge.*
+
+```
+
+After updating the file, you know the drill: `git add README.md`, `git commit -m "Updated README with Groq & Llama 3.1"`, and `git push origin main`!
+
+```
