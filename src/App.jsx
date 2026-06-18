@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 import { motion, AnimatePresence } from 'framer-motion';
 import './App.css';
 
@@ -34,9 +34,9 @@ const projectsData = [
   {
     id: 2,
     title: "AI-Powered Financial Web App",
-    tags: ["React", "JS", "Gemini API"],
-    shortDesc: "Architected a responsive platform for automated data processing. Integrated Gemini API for custom analytical agents to streamline workflows.",
-    architecture: "React.js frontend communicating with custom analytical agents powered by the Google Generative AI SDK (Gemini API).",
+    tags: ["React", "JS", "API"],
+    shortDesc: "Architected a responsive platform for automated data processing. Integrated custom analytical agents to streamline workflows.",
+    architecture: "React.js frontend communicating with custom analytical agents powered by advanced Large Language Models.",
     challenge: "Prompt-engineering the LLM to consistently return structured financial data (JSON) instead of conversational text, ensuring the frontend UI wouldn't break.",
     impact: "Streamlined complex analytical workflows, creating a highly responsive and autonomous user experience that processes data with minimal human intervention."
   },
@@ -70,7 +70,7 @@ export default function App() {
   const [chatInput, setChatInput] = useState('');
   const [isBotTyping, setIsBotTyping] = useState(false);
   const [messages, setMessages] = useState([
-    { sender: 'bot', text: "Hi! I'm Yash's AI Assistant, powered by Gemini. Ask me anything about his tech stack, experience, or projects." }
+    { sender: 'bot', text: "Hi! I'm Yash's AI Assistant, powered by Llama 3. Ask me anything about his tech stack, experience, or projects." }
   ]);
   const chatEndRef = useRef(null);
 
@@ -81,8 +81,6 @@ export default function App() {
     { text: "💡 INITIALIZATION COMPLETE. Type 'help' to see a list of available commands.", type: "success" }
   ]);
   const cliEndRef = useRef(null);
-
-  const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
   // Auto-scrolls
   useEffect(() => { if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: 'smooth' }); }, [messages, isBotTyping]);
@@ -131,20 +129,45 @@ export default function App() {
     } catch (error) { alert('Network error. Please try again.'); } finally { setIsSubmitting(false); }
   };
 
+  // --- GROQ / LLAMA 3 INTEGRATION ---
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
     const userText = chatInput;
     setMessages(prev => [...prev, { sender: 'user', text: userText }]);
-    setChatInput(''); setIsBotTyping(true);
+    setChatInput(''); 
+    setIsBotTyping(true);
+    
     try {
       const systemInstruction = `You are an AI assistant integrated into the professional portfolio of Yash Bhalchandra Hulge. Your job is to answer questions about Yash concisely. Facts: Student at Savitribai Phule Pune University (NMIET) with 8.4 CGPA. Frontend developer (HTML5, CSS3, JavaScript, React.js), Python, C++. AI Intern at Coincent. Projects: Bharat-Setu, AI Financial Web App, DeepFake Model, PokeDex Web App. Email: hulgeyash12@gmail.com`;
-      const history = messages.map(msg => ({ role: msg.sender === 'bot' ? 'model' : 'user', parts: [{ text: msg.text }] }));
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-      const chat = model.startChat({ history: [ { role: 'user', parts: [{ text: systemInstruction }] }, { role: 'model', parts: [{ text: 'Understood.' }]}, ...history.slice(1) ] });
-      const result = await chat.sendMessage(userText);
-      setMessages(prev => [...prev, { sender: 'bot', text: result.response.text() }]);
-    } catch (error) { setMessages(prev => [...prev, { sender: 'bot', text: "High traffic. Please email Yash directly!" }]); } 
+      
+      const groq = new Groq({
+        apiKey: import.meta.env.VITE_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true // Required for frontend execution
+      });
+
+      // Map chat history to Groq's required format
+      const chatHistory = messages.slice(1).map(msg => ({
+        role: msg.sender === 'bot' ? 'assistant' : 'user',
+        content: msg.text
+      }));
+
+      const chatCompletion = await groq.chat.completions.create({
+        messages: [
+          { role: 'system', content: systemInstruction },
+          ...chatHistory,
+          { role: 'user', content: userText }
+        ],
+        model: "llama-3.1-8b-instant", // Fast, highly capable model
+        temperature: 0.5,
+        max_tokens: 300,
+      });
+
+      setMessages(prev => [...prev, { sender: 'bot', text: chatCompletion.choices[0].message.content }]);
+    } catch (error) { 
+      console.error(error);
+      setMessages(prev => [...prev, { sender: 'bot', text: "High traffic. Please email Yash directly at hulgeyash12@gmail.com!" }]); 
+    } 
     finally { setIsBotTyping(false); }
   };
 
@@ -169,7 +192,7 @@ export default function App() {
         responseText = "[Frontend]: HTML5, CSS3, JavaScript, React.js\n[Core]: Python, C++, SQL\n[Cloud]: GCP, Azure, MySQL\n[Tools]: Git/GitHub, Jupyter";
         break;
       case 'projects':
-        responseText = "1. Bharat-Setu Platform (Python, AI)\n2. AI-Powered Financial Web App (React, Gemini API)\n3. DeepFake Video Detection (ML, CNNs)\n4. PokeDex Web App (React.js)";
+        responseText = "1. Bharat-Setu Platform (Python, AI)\n2. AI-Powered Financial Web App (React, LLMs)\n3. DeepFake Video Detection (ML, CNNs)\n4. PokeDex Web App (React.js)";
         break;
       case 'contact':
         responseText = "Email: hulgeyash12@gmail.com\nLocation: Pune, Maharashtra";
@@ -205,7 +228,6 @@ export default function App() {
           <button onClick={() => scrollToSection('projects')}>Projects</button>
           <button onClick={() => scrollToSection('experience')}>Experience</button>
           <button onClick={() => scrollToSection('contact')}>Contact</button>
-          {/* UPDATED TERMINAL BUTTON */}
           <button className="nav-terminal-btn" onClick={() => setIsCliOpen(true)}>
             <span className="terminal-icon">&gt;_</span> YashOS <span className="terminal-shortcut-hint">[`]</span>
           </button>
@@ -280,7 +302,6 @@ export default function App() {
           </div>
         </section>
 
-        {/* --- NEW YASHOS DEDICATED SECTION --- */}
         <section id="yashos-promo" style={{ paddingTop: '2rem' }}>
           <motion.div className="yashos-banner" variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }}>
             <div className="yashos-banner-content">
@@ -289,7 +310,6 @@ export default function App() {
               <button className="btn-glow" onClick={() => setIsCliOpen(true)}>Initialize YashOS</button>
             </div>
             
-            {/* Visual representation of the terminal that acts as a giant clickable button */}
             <div className="yashos-banner-visual" onClick={() => setIsCliOpen(true)}>
               <div className="mock-terminal-header">
                 <div className="mock-dot red"></div>
@@ -326,7 +346,6 @@ export default function App() {
         </footer>
       </div>
 
-      {/* --- HIDDEN CLI OVERLAY --- */}
       <AnimatePresence>
         {isCliOpen && (
           <motion.div className="cli-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsCliOpen(false)}>
@@ -352,7 +371,6 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* --- CASE STUDY MODAL --- */}
       <AnimatePresence>
         {selectedProject && (
           <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedProject(null)}>
@@ -371,7 +389,7 @@ export default function App() {
       <div className="chat-widget-container">
         {isChatOpen && (
           <div className="chat-window">
-            <div className="chat-header"><h4>💬 Yash-Bot (Gemini)</h4><button className="close-btn" onClick={() => setIsChatOpen(false)}>×</button></div>
+            <div className="chat-header"><h4>💬 Yash-Bot (Llama 3)</h4><button className="close-btn" onClick={() => setIsChatOpen(false)}>×</button></div>
             <div className="chat-messages">
               {messages.map((msg, index) => (<div key={index} className={`chat-bubble ${msg.sender}`}>{msg.text}</div>))}
               {isBotTyping && <div className="chat-bubble bot"><em>Thinking...</em></div>}
